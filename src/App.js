@@ -30,6 +30,7 @@ class App extends Component {
     this.stopRecording = this.stopRecording.bind(this);
     this.playRecording = this.playRecording.bind(this);
     this.saveRecording = this.saveRecording.bind(this);
+    this.deleteAudio = this.deleteAudio.bind(this);
   }
 
   componentWillMount() {
@@ -53,9 +54,10 @@ class App extends Component {
     await AudioRecorder.stopRecording()
   }
 
-  playRecording() {
+  playRecording(path) {
+    const audioPath = path.audio.length === 0 ? this.audioPath : path.audio
     setTimeout(() => {
-        const sound = new Sound(this.audioPath, '', (error) => {
+        const sound = new Sound(audioPath, '', (error) => {
           if (error) {
             console.log('failed to load the sound', error);
           }
@@ -73,13 +75,24 @@ class App extends Component {
       }, 100);
   }
 
+  deleteAudio(value) {
+    const newList = this.state.files.filter((audio) => {
+      return value.name !== audio.name;
+    })
+
+    this.setState({
+      files: newList,
+      dataSource: this.state.dataSource.cloneWithRows(newList),
+    })
+  }
+
   saveRecording(name) {
     let number = this.state.number + 1
-    const files =  [...this.state.file, { name: name, audio: this.audioPath }]
+    let newFiles =  [ ...this.state.files, { name: name, audio: this.audioPath } ]
     this.setState({ 
-      files, 
+      files: newFiles, 
       number,
-      dataSource: ds.cloneWithRows(files)
+      dataSource: this.state.dataSource.cloneWithRows(newFiles),
     })
   }
 
@@ -91,9 +104,12 @@ class App extends Component {
         dataSource={this.state.dataSource}
         enableEmptySections
         renderRow={ (value) => {
+          console.log('value is ', value)
           return (
             <Rows 
               audio={value}
+              onPlayPress={() => this.playRecording(value)}
+              onDeletePress={() => this.deleteAudio(value)}
             />
           )
         }}
@@ -104,10 +120,10 @@ class App extends Component {
         <Header />
         <View style={styles.mainContainer}>
           <View style={styles.audioCreateContainer}>
-            <Button text={'Record'} onPress={() => this.startRecording(name)}/>
-            <Button text={'Pause'} onPress={() => this.pauseRecording(name)}/>
-            <Button text={'Stop'} onPress={() => this.stopRecording(name)}/>
-            <Button text={'Play'} onPress={() => this.playRecording(name)}/>
+            <Button text={'Record'} onPress={this.startRecording}/>
+            <Button text={'Pause'} onPress={this.pauseRecording}/>
+            <Button text={'Stop'} onPress={this.stopRecording}/>
+            <Button text={'Play'} onPress={() => this.playRecording('') }/>
             <Button text={'Save'} onPress={() => this.saveRecording(name)}/>
           </View>
           <View style={styles.body}>
@@ -141,8 +157,6 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     backgroundColor:'#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
   }
 });
 
