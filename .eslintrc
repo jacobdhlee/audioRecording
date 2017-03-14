@@ -1,0 +1,15 @@
+{
+    "parser": "babel-eslint",
+    "plugins": [
+        "react", "import", "babel"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended"
+    ],
+    "rules": {
+        "babel/new-cap": 1,
+        "babel/object-curly-spacing": 1,
+        "babel/semi": 1
+    }
+}
