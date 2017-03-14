@@ -55,7 +55,7 @@ class App extends Component {
   }
 
   playRecording(path) {
-    const audioPath = path.audio.length === 0 ? this.audioPath : path.audio
+    const audioPath = !path ? this.audioPath : path.audio
     setTimeout(() => {
         const sound = new Sound(audioPath, '', (error) => {
           if (error) {
