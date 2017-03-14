@@ -19,11 +19,15 @@ class App extends Component {
     super()
     const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     this.state = {
-      number: 0,
+      recording: false,
+      pause: false,
+      stop: false,
+      path: AudioUtils.DocumentDirectoryPath + '/test' + moment().format() + '.aac',
       files: [],
       dataSource: ds.cloneWithRows([]),
     }
 
+    this.prepareRecordingAtPath = this.prepareRecordingAtPath.bind(this);
     this.startRecording = this.startRecording.bind(this);
     this.pauseRecording = this.pauseRecording.bind(this);
     this.stopRecording = this.stopRecording.bind(this);
@@ -32,45 +36,69 @@ class App extends Component {
     this.deleteAudio = this.deleteAudio.bind(this);
   }
 
-  async startRecording() {
-    this.audioPath = AudioUtils.DocumentDirectoryPath + '/test'+ this.state.number + '.aac';
-    AudioRecorder.prepareRecordingAtPath(this.audioPath, {
+  componentDidMount() {
+    this.prepareRecordingAtPath()
+  }
+
+  prepareRecordingAtPath() {
+    AudioRecorder.prepareRecordingAtPath(this.state.path, {
       SampleRate: 22050,
       Channels: 1,
       AudioQuality: "Low",
       AudioEncoding: "aac"
     });
+  }
+
+  async startRecording() {
+    const { recording, pause, stop } = this.state;
+    if(!stop) {
+      this.prepareRecordingAtPath()
+    }
+    this.setState({recording: !this.state.recording, pause: false});
 
     await AudioRecorder.startRecording();
   }
 
   async pauseRecording() {
+    const { recording, pause, stop } = this.state;
+    this.setState({
+      recording: !this.state.recording,
+      pause: !this.state.pause,
+    });
+
     await AudioRecorder.pauseRecording();
   }
 
   async stopRecording() {
+    const { recording, pause, stop } = this.state;
+    this.setState({
+      recording: false,
+      pause: false,
+      stop: true
+    })
+    this.setState({recording: !this.state.recording});
+
     await AudioRecorder.stopRecording()
   }
 
-  playRecording(path) {
-    const audioPath = !path ? this.audioPath : path.audio
+  async playRecording(path) {    
+    const audioPath = !path ? this.state.path : path.audio
     setTimeout(() => {
-        const sound = new Sound(audioPath, '', (error) => {
-          if (error) {
-            console.log('failed to load the sound', error);
+    const sound = new Sound(audioPath, '', (error) => {
+      if (error) {
+        console.log('failed to load the sound', error);
+      }
+    });
+      setTimeout(() => {
+        sound.play((success) => {
+          if (success) {
+            console.log('successfully finished playing');
+          } else {
+            console.log('playback failed due to audio decoding errors');
           }
         });
-
-        setTimeout(() => {
-          sound.play((success) => {
-            if (success) {
-              console.log('successfully finished playing');
-            } else {
-              console.log('playback failed due to audio decoding errors');
-            }
-          });
-        }, 100);
       }, 100);
+    }, 100);
   }
 
   deleteAudio(value) {
@@ -85,13 +113,19 @@ class App extends Component {
   }
 
   saveRecording(name) {
-    let number = this.state.number + 1
-    let newFiles =  [ ...this.state.files, { name: name, audio: this.audioPath } ]
-    this.setState({ 
-      files: newFiles, 
-      number,
-      dataSource: this.state.dataSource.cloneWithRows(newFiles),
-    })
+    const { recording, pause, stop } = this.state;
+    if( !stop ) { return; }
+    else {
+      let newMoment = moment().format()
+      let newFiles =  [ ...this.state.files, { name: name, audio: this.state.path } ]
+      console.log('newfiles is ', newFiles)
+      this.setState({
+        stop: false,
+        path: AudioUtils.DocumentDirectoryPath + '/test' + newMoment + '.aac',
+        files: newFiles, 
+        dataSource: this.state.dataSource.cloneWithRows(newFiles),
+      })
+    }
   }
 
   render() {
