@@ -23,7 +23,6 @@ class App extends Component {
       files: [],
       dataSource: ds.cloneWithRows([]),
     }
-    this.audioPath = AudioUtils.DocumentDirectoryPath + '/test'+ this.state.number + '.aac';
 
     this.startRecording = this.startRecording.bind(this);
     this.pauseRecording = this.pauseRecording.bind(this);
@@ -33,16 +32,15 @@ class App extends Component {
     this.deleteAudio = this.deleteAudio.bind(this);
   }
 
-  componentWillMount() {
+  async startRecording() {
+    this.audioPath = AudioUtils.DocumentDirectoryPath + '/test'+ this.state.number + '.aac';
     AudioRecorder.prepareRecordingAtPath(this.audioPath, {
       SampleRate: 22050,
       Channels: 1,
       AudioQuality: "Low",
       AudioEncoding: "aac"
     });
-  }
 
-  async startRecording() {
     await AudioRecorder.startRecording();
   }
 
