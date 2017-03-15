@@ -51,11 +51,12 @@ class App extends Component {
 
   async startRecording() {
     const { recording, pause, stop } = this.state;
-    if(!stop) {
+    if(stop) {
       this.prepareRecordingAtPath()
+      this.setState({stop: !this.state.stop})
     }
-    this.setState({recording: !this.state.recording, pause: false});
 
+    this.setState({recording: !this.state.recording});
     await AudioRecorder.startRecording();
   }
 
@@ -118,9 +119,7 @@ class App extends Component {
     else {
       let newMoment = moment().format()
       let newFiles =  [ ...this.state.files, { name: name, audio: this.state.path } ]
-      console.log('newfiles is ', newFiles)
       this.setState({
-        stop: false,
         path: AudioUtils.DocumentDirectoryPath + '/test' + newMoment + '.aac',
         files: newFiles, 
         dataSource: this.state.dataSource.cloneWithRows(newFiles),
